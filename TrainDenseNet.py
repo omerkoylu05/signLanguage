@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 # Ana klasör yolunu belirtin
 base_dir = './dataset3'
@@ -12,7 +14,7 @@ datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
 train_generator = datagen.flow_from_directory(
     base_dir,
     target_size=(240, 320),
-    batch_size=16,
+    batch_size=12,
     class_mode='categorical',
     subset='training',
     shuffle=True
@@ -22,7 +24,7 @@ train_generator = datagen.flow_from_directory(
 test_generator = datagen.flow_from_directory(
     base_dir,
     target_size=(240, 320),
-    batch_size=16,
+    batch_size=12,
     class_mode='categorical',
     subset='validation',
     shuffle=True
@@ -39,7 +41,9 @@ model.add(tf.keras.layers.Dense(len(train_generator.class_indices), activation='
 
 # Modeli derleyin
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+early_stopping = EarlyStopping(monitor='val_loss', patience=3)
+model_checkpoint = ModelCheckpoint('./model/model_{epoch}_{val_accuracy:.2f}.keras', monitor='val_accuracy', save_best_only=False, save_weights_only=False)
 
 # Modeli eğitin
-model.fit(train_generator, validation_data=test_generator, epochs=10)
+model.fit(train_generator, validation_data=test_generator, callbacks=[early_stopping,model_checkpoint], epochs=10)
 model.save("DenseNet1.keras")
