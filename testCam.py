@@ -25,7 +25,7 @@ from keras.utils import plot_model
 plot_model(model, to_file='model.png')
 
 # Open the camera
-cap = cv2.VideoCapture("/dev/video3")
+cap = cv2.VideoCapture("/dev/video1")
 
 # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -55,9 +55,9 @@ while cap.isOpened():
     M[1, 2] += (nH / 2) - center[1]
 
     # Döndürme matrisini uygula
-    frame = cv2.warpAffine(frame, M, (nW, nH))
+    # frame = cv2.warpAffine(frame, M, (nW, nH))
 
-    # frame=frame[0:480,130:450]
+    frame=frame[0:640,80:560]
     # frame = cv2.resize(frame, (400, 800))
 
     # Check if the frame has been captured successfully
@@ -76,17 +76,19 @@ while cap.isOpened():
 
     # Get the index of the class with the highest predicted probability
     predicted_class = np.argmax(predictions)
-    percent=predictions[0][predicted_class]
-    cv2.putText(frame, 'Yuzde:'+str(predictions[0][predicted_class]), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-    cv2.putText(frame, 'Harf:' + class_names[predicted_class], (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1,(255, 255, 255), 2)
+    percent = predictions[0][predicted_class]
+    class_name = "???"
+
+    if percent > 0.60:
+        print(predicted_class)
+        print(percent)
+        class_name = class_names[predicted_class]
+        print('The predicted class name of the image is:', class_name)
+
+    cv2.putText(frame, 'Yuzde:%'+str(predictions[0][predicted_class]*100), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+    cv2.putText(frame, 'Harf:' + class_name, (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1,(255, 0, 0), 2)
     # print('Resolution: ' + str(frame.shape[0]) + ' x ' + str(frame.shape[1]))
     cv2.imshow('frame', frame)
-    if percent>0.60:
-        print(percent)
-        class_name=class_names[predicted_class]
-
-    # print('The predicted class of the image is:', predicted_class)
-        print('The predicted class name of the image is:',class_name)
 
     # Release the camera
     if cv2.waitKey(5) == 27:

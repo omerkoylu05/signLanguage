@@ -3,6 +3,8 @@ from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.models import load_model
+from tensorflow.keras.optimizers import Adam
 
 # Ana klasör yolunu belirtin
 base_dir = './dataset3'
@@ -33,14 +35,15 @@ test_generator = datagen.flow_from_directory(
 # DenseNet modelini yükleyin
 base_model = DenseNet121(weights='imagenet', include_top=False, input_shape=(240, 320, 3))
 
-# Modeli özelleştirin
+# # Modeli özelleştirin
 model = tf.keras.models.Sequential()
 model.add(base_model)
 model.add(tf.keras.layers.GlobalAveragePooling2D())
 model.add(tf.keras.layers.Dense(len(train_generator.class_indices), activation='softmax'))
-
+opt=Adam(learning_rate=0.0001)
 # Modeli derleyin
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+# model=load_model("./model/model_6_0.35.keras")
 early_stopping = EarlyStopping(monitor='val_loss', patience=3)
 model_checkpoint = ModelCheckpoint('./model/model_{epoch}_{val_accuracy:.2f}.keras', monitor='val_accuracy', save_best_only=False, save_weights_only=False)
 
