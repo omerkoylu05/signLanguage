@@ -21,7 +21,7 @@ class_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h','hastane','i', 'j', 'k', '
 
 print(class_names)
 # Load the trained model
-model = load_model('./model/densenet121_lr000.1_3_0.99.keras')
+model = load_model('./model/model_3_0.95.keras')
 
 from keras.utils import plot_model
 plot_model(model, to_file='model.png')
@@ -40,6 +40,41 @@ while cap.isOpened():
     # Capture a single frame
     ret, frame = cap.read()
     frame=cv2.flip(frame,1)
+    # Resmi BGR'den RGB'ye dönüştür
+    image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Resmi HSV renk uzayına dönüştür
+    hsv_image = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV)
+    # cv2.imshow("hsv",hsv_image)
+    # Genişletilmiş cilt rengi aralığını belirle
+    lower_skin = np.array([0, 24, 40], dtype=np.uint8)
+    upper_skin = np.array([20, 255, 255], dtype=np.uint8)
+
+    # Maskeleme
+    skin_mask = cv2.inRange(hsv_image, lower_skin, upper_skin)
+
+    skin = cv2.bitwise_and(frame, frame, mask=skin_mask)
+    # cv2.imshow("cilt",skin)
+
+    background_color = (100, 100, 125)  # Beyaz renk
+    background = np.full_like(image_rgb, background_color)
+
+    # Cilt rengi maskesi dışındaki bölgeyi arka planla doldur
+    non_skin_mask = cv2.bitwise_not(skin_mask)
+    # print("non_skin_mask",non_skin_mask.shape)
+    # print("background",background.shape)
+    background=cv2.bitwise_and(background,background,mask=non_skin_mask)
+    result = cv2.bitwise_or(skin, background)
+
+    # Geri kalan kısmı griye dönüştür
+    # gray_mask = cv2.bitwise_not(skin_mask)
+    # gray_background = cv2.cvtColor(cv2.cvtColor(gray_mask, cv2.COLOR_GRAY2RGB), cv2.COLOR_RGB2GRAY)
+    #
+    # # Gri arka planı oluştur
+    # gray_background_rgb = cv2.cvtColor(gray_background, cv2.COLOR_GRAY2RGB)
+
+    # Cilt rengi alanlarını renkli arka plan ile birleştir
+    # result = cv2.bitwise_or(skin, background)
 
     (h, w) = frame.shape[:2]
 
@@ -60,7 +95,7 @@ while cap.isOpened():
     # Döndürme matrisini uygula
     # frame = cv2.warpAffine(frame, M, (nW, nH))
 
-    frame=frame[0:640,80:560]
+    frame=result[0:640,80:560]
     # frame = cv2.resize(frame, (400, 800))
 
     # Check if the frame has been captured successfully
